@@ -20,5 +20,11 @@ me = "testing@sonu.com"
 you = "sonukr.meena@cronexus.com"
 subject = "dummy subject goes here"
 
-newAlert.build(subject,me,you, "<h1>Hello world </h1>")
+newAlert.build({
+    "from": "sonukr.meena@testserver.com",
+    "to": "sonukr666@gmail.com",
+    "subject": "dummy subject goes here",
+    "body": "<h1>my mail body goes here </h1>",
+    "reply-to": "sahil@testserver.com"
+})
 newAlert.dispatch()

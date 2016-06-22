@@ -10,12 +10,28 @@ Packages
 ``` python
     from sk-alerts.email_alert import EmailAlert
     newAlert = EmailAlert({ "mime_type": EmailAlert.MIME_HTML} )
-    me = "testing@sonu.com"
-    you = "sonukr.meena@cronexus.com" 
-    subject = "dummy subject goes here"
-
-    newAlert.build(subject,me,you, "<h1>Hello world </h1>")
+    newAlert.build({
+        "from": "sonukr.meena@testserver.com",
+        "to": "<test maill>@gmail.com",
+        "subject": "dummy subject goes here",
+        "body": "<h1>my mail body goes here </h1>",
+        "reply-to": "sahil@testserver.com"
+    })
     newAlert.dispatch()
+```
+OR
+
+# With smtp server
+
+``` python
+       newAlert = EmailAlert({"mime_type": EmailAlert.MIME_HTML,
+       'smtp': {
+        'server': <server>,
+        'port': <port>,
+        'username': <username>,
+        'password': <password>
+       } } )
+
 ```
 
 ### sk-alerts.pagerduty_alert

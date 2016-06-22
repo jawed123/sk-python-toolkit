@@ -9,12 +9,22 @@ from email.mime.text import MIMEText
 #
 # Example:
 # 	newAlert = EmailAlert({ "mime_type": EmailAlert.MIME_HTML} )
-# 	me = "testing@sonu.com"
-# 	you = "sonukr.meena@cronexus.com"
-# 	subject = "dummy subject goes here"
-#
-# 	newAlert.build(subject,me,you, "<h1>Hello world </h1>")
+#       newAlert.build({
+#           "from": "sonukr.meena@testserver.com",
+#           "to": "sonukr666@gmail.com",
+#           "subject": "dummy subject goes here",
+#           "body": "<h1>my mail body goes here </h1>",
+#           "reply-to": "sahil@testserver.com"
+#       })
 # 	newAlert.dispatch()
+# With smtp server
+#       newAlert = EmailAlert({"mime_type": EmailAlert.MIME_HTML,
+#       'smtp': {
+#        'server': <server>,
+#        'port': <port>,
+#        'username': <username>,
+#        'password': <password>
+#       } } )
 #######################################
 
 class EmailAlert:
@@ -24,49 +34,50 @@ class EmailAlert:
 	MIME_TEXT="text mime type"
 	MIME_HTML="html mime type"
 
-	Subject = None
-	To = None
-	From = None
-	Body = None
 	Mime_type = MIME_TEXT
+        smtpserver = None
+        message = None
 
 	def __init__(self, options):
 		if options.get('mime_type',None) == None:
 			raise Exception("mime_type filed not present")
 		self.Mime_type = options['mime_type']
+                if options.get('smtp', None) == None:
+                    print "using localhost smtp"
+                    self.smtpserver = smtplib.SMTP('localhost')
+                else:
+                    smtp = options.get('smtp')
+                    server = smtp.get('server')
+                    port = smtp.get('port')
+                    username = smtp.get('username')
+                    password = smtp.get('password')
 
-	def build(self, mail_subject, mail_from, mail_to, mail_body):
-		self.set_subject(mail_subject)
-		self.set_from(mail_from)
-		self.set_to(mail_to)
-		self.set_body(mail_body)
+                    self.smtpserver = smtplib.SMTP( server, port )
+                    self.smtpserver.ehlo()
+                    self.smtpserver.starttls()
+                    self.smtpserver.ehlo()
+                    self.smtpserver.login(username, password )
+
+
+        def build(self, mailObject):
+		if self.Mime_type == self.MIME_TEXT:
+			self.message = MIMEText( mailObject['body'], 'plain')
+		elif self.Mime_type == self.MIME_HTML:
+			self.message = MIMEText( mailObject['body'], 'html')
+		else:
+                    raise "Unsupported mime type provided"
+
+                self.message['From'] = mailObject.get('from')
+                self.message['To'] = mailObject['to']
+                self.message['Subject'] = mailObject['subject']
+                self.message['Cc'] = mailObject.get('cc', '')
+                self.message['Bcc'] = mailObject.get('bcc', '')
+                self.message['Reply-To'] = mailObject.get('reply-to', '')
+
 
 	def dispatch(self):
-		msg = None
-		if self.Mime_type == self.MIME_TEXT:
-			msg = MIMEText(self.Body, 'plain')
-		elif self.Mime_type == self.MIME_HTML:
-			msg = MIMEText(self.Body, 'html')
-		else:
-		     raise "Unsupported mime type provided"
+		self.smtpserver.sendmail( self.message['From'], self.message['To'], self.message.as_string() )
+		self.smtpserver.quit()
 
-		msg['Subject'] = self.Subject;
-		msg['From'] = self.From
-		msg['To'] = self.To
 
-		s = smtplib.SMTP('localhost')
-		s.sendmail( self.From, self.To, msg.as_string() )
-		s.quit()
-
-	def set_subject(self, mail_subject):
-		self.Subject = mail_subject
-
-	def set_to(self, mail_to):
-		self.To = mail_to
-
-	def set_from(self, mail_from):
-		self.From = mail_from
-
-	def set_body(self, mail_body):
-		self.Body = mail_body
 
